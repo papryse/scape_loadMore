@@ -1,0 +1,92 @@
+---
+title: "golf clubs2"
+author: "Paul Pryse"
+date: "2024-04-08"
+output: html_document
+---
+To stop: remoteDriver$server$stop()
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load libraries
+```{r}
+library(tidyverse)
+library(rvest)
+library(RSelenium)
+library(wdman)
+library(netstat)
+```
+
+Create Selenium object and remote driver
+Navigate to the page
+Do I need to have Firefox installed???
+```{r}
+selenium_object <- selenium(retcommand = T, check = F)
+
+remoteDriver <- rsDriver(browser = 'firefox',
+                        chromever = NULL,
+                        verbose = F,
+                        port = free_port(TRUE))
+remDr <- remoteDriver[["client"]]
+
+remDr$navigate("https://www.worldwidegolfshops.com/golf-clubs/new-releases")
+```
+
+Click through popup and accept cookies-- need to add pause for the pop up
+```{r}
+closepopup<- remDr$findElement(using= 'class', 'ltkpopup-close')
+closepopup$clickElement()
+
+acceptcookies<- remDr$findElement(using = 'id', 'onetrust-accept-btn-handler')
+acceptcookies$clickElement()
+```
+
+Scroll down to Show more button
+Doing this by pixel because scroll into view wouldn't work
+```{r}
+remDr$executeScript("window.scrollBy(0,2000)")
+
+showMore<- remDr$findElement(using= 'css selector', '.no-underline .ph5')
+
+showMore$clickElement() #go to page 2
+
+remDr$executeScript("window.scrollBy(0,2000)")
+
+showMore<- remDr$findElement(using= 'css selector', '.no-underline .ph5')
+
+showMore$clickElement() #go to page 3
+
+remDr$executeScript("window.scrollBy(0,2000)")
+
+showMore<- remDr$findElement(using= 'css selector', '.no-underline .ph5')
+
+showMore$clickElement() #go to page 4
+
+remDr$executeScript("window.scrollBy(0,1800)")
+
+showMore<- remDr$findElement(using= 'css selector', '.no-underline .ph5')
+
+showMore$clickElement() #go to page 5
+
+remDr$executeScript("window.scrollBy(0,500)")
+```
+
+Read the html
+```{r}
+html <- remDr$getPageSource()[[1]] 
+
+Items<- read_html(html) %>% 
+  html_elements(".vtex-product-summary-2-x-brandName--search") %>%
+  html_text2
+```
+
+Create a tibble
+```{r}
+clubs<- tibble(Items)
+```
+
+```{r}
+write.csv(clubs, "worldwide golf best sellers.csv")
+```
